@@ -4,13 +4,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editor Demo</title>
+    <title>Complex Editor Demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
 </head>
 
 <body>
-    <nav class=" navbar navbar-expand-lg navbar-dark" style="background-color: #3498db;">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #3498db;">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">OneCompiler Embedding Demos</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -38,14 +38,76 @@
     </nav>
 
     <div class="container">
-
         <br /><br />
-
-        <iframe frameBorder="0" height="400px" id="oc-editor" src="https://onecompiler.com/embed/python"
+        <iframe frameBorder="0" height="400px" id="oc-editor"
+            src="https://onecompiler.com/embed/python?codeChangeEvent=true&listenToEvents=true&hideNew=true"
             width="100%"></iframe>
+
+        <br />
+        <p>automatically catching content on parent's website </p>
+
+        <div class="input-group">
+
+            <span class="input-group-text">code</span>
+
+            <textarea class="form-control" rows="10" aria-label="With textarea" id="parent-code-capture"></textarea>
+        </div>
+        <br />
+        <button type="button" onclick="javascript:triggerRun()" class="btn btn-primary">Trigger Run</button>
+        <button type="button" onclick="javascript:sendCodeToEditor()" class="btn btn-warning">
+            Send Code to Editor</button>
 
     </div>
 
+    <script>
+        window.onmessage = function (e) {
+            if (e.data && e.data.language) {
+                console.log(e.data)
+                document.getElementById('parent-code-capture').value = JSON.stringify(e.data, null, 2);
+            }
+        };
+
+        function triggerRun() {
+            var iFrame = document.getElementById('oc-editor');
+            iFrame.contentWindow.postMessage({
+                eventType: 'triggerRun'
+            }, "*");
+        }
+
+        function sendCodeToEditor() {
+            let currentCode = document.getElementById('parent-code-capture').value;
+            if (!currentCode) {
+                alert('No code to send');
+                return;
+            }
+            let currentCodeObj = JSON.parse(currentCode);
+
+            if (!currentCodeObj.language) {
+                alert('Language missing');
+                return;
+            }
+
+            if (!currentCodeObj.files || currentCodeObj.files.length === 0) {
+                alert('Files missing');
+                return;
+            }
+
+            var iFrame = document.getElementById('oc-editor');
+            iFrame.contentWindow.postMessage({
+                eventType: 'populateCode',
+                language: currentCodeObj.language,
+                files: currentCodeObj.files,
+            }, "*");
+
+        }
+
+    </script>
+
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.min.js"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js"
